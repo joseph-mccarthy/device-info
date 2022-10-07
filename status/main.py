@@ -1,17 +1,22 @@
-
-import platform
-import socket
-import re
-import uuid
 import json
-import psutil
-import logging
 import paho.mqtt.client as paho
 import os
+import platform
+import socket
+import uuid
+import psutil
+import logging
+import re
 
 
 def get_load():
     return os.getloadavg()
+
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
 
 
 def get_system_info():
@@ -22,7 +27,7 @@ def get_system_info():
         info['platform-version'] = platform.version()
         info['architecture'] = platform.machine()
         info['hostname'] = socket.gethostname()
-        info['ip-address'] = socket.gethostbyname(socket.gethostname())
+        info['ip-address'] = get_ip_address()
         info['mac-address'] = ':'.join(re.findall('..',
                                        '%012x' % uuid.getnode()))
         info['processor'] = platform.processor()
@@ -41,22 +46,23 @@ def send_message(payload):
     client.connect(broker)
     client.publish(topic, json.dumps(payload))
 
+
 payload = json.loads(get_system_info())
 load = get_load()
 status = {
-            "load": {
-                "1":load[0],
-                "5":load[1],
-                "15":load[2]
-            },
-            "resources":{
-            "disk":psutil.disk_usage("/").percent,
-            "memory":psutil.virtual_memory().percent
-            },
-            "info":{
-                "hostname":payload['hostname'],
-                "address":payload['ip-address']
-            }            
-        }
+    "load": {
+        "1": load[0],
+        "5": load[1],
+        "15": load[2]
+    },
+    "resources": {
+        "disk": psutil.disk_usage("/").percent,
+        "memory": psutil.virtual_memory().percent
+    },
+    "info": {
+        "hostname": payload['hostname'],
+        "address": payload['ip-address']
+    }
+}
 
 send_message(status)
