@@ -34,7 +34,7 @@ def get_system_info():
 
 
 def send_message(payload):
-    broker = "broker"
+    broker = "broker.local"
     topic = "device/boot"
 
     client = paho.Client(client_id=payload['hostname'])
